@@ -22,5 +22,8 @@ android {
 
 dependencies {
     compile "com.android.support:support-annotations:${rootProject.ext.androidSupportSdkVersion}"
-    compile 'io.reactivex:rxjava:1.1.0'
+    compile project(':rxandroidaudio')
+    compile ('io.reactivex:rxandroid:1.1.0') {
+        exclude module: 'rxjava'
+    }
 }

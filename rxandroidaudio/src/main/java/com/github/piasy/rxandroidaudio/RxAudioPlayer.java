@@ -93,17 +93,18 @@ public final class RxAudioPlayer {
                 public void call(final SingleSubscriber<? super Boolean> singleSubscriber) {
                     stopPlay();
 
-                    Log.d(TAG, "MediaPlayer to start play: " + config.mAudioFile.getName());
+                    Log.d(TAG, "to start play: " + config.mAudioFile.getName());
                     mPlayer = new MediaPlayer();
                     try {
                         mPlayer.setDataSource(config.mAudioFile.getAbsolutePath());
-                        setMediaPlayerListener(singleSubscriber);
+                        setMediaPlayerListener(singleSubscriber, config);
                         mPlayer.setVolume(config.mLeftVolume, config.mRightVolume);
                         mPlayer.setLooping(config.mLooping);
                         mPlayer.prepare();
                         mPlayer.start();
                     } catch (IllegalArgumentException | IOException e) {
-                        Log.w(TAG, "startPlay fail, IllegalArgumentException: " + e.getMessage());
+                        Log.w(TAG, "startPlay " + config.mAudioFile.getName() +
+                                " fail, IllegalArgumentException: " + e.getMessage());
                         stopPlay();
                         singleSubscriber.onError(e);
                     }
@@ -116,15 +117,16 @@ public final class RxAudioPlayer {
                 public void call(final SingleSubscriber<? super Boolean> singleSubscriber) {
                     stopPlay();
 
-                    Log.d(TAG, "MediaPlayer to start play: " + config.mAudioResource);
+                    Log.d(TAG, "to start play: " + config.mAudioResource);
                     mPlayer = MediaPlayer.create(config.mContext, config.mAudioResource);
                     try {
-                        setMediaPlayerListener(singleSubscriber);
+                        setMediaPlayerListener(singleSubscriber, config);
                         mPlayer.setVolume(config.mLeftVolume, config.mRightVolume);
                         mPlayer.setLooping(config.mLooping);
                         mPlayer.start();
                     } catch (IllegalArgumentException e) {
-                        Log.w(TAG, "startPlay fail, IllegalArgumentException: " + e.getMessage());
+                        Log.w(TAG, "startPlay " + config.mAudioResource +
+                                " fail, IllegalArgumentException: " + e.getMessage());
                         stopPlay();
                         singleSubscriber.onError(e);
                     }
@@ -135,11 +137,12 @@ public final class RxAudioPlayer {
         }
     }
 
-    void setMediaPlayerListener(final SingleSubscriber<? super Boolean> singleSubscriber) {
+    void setMediaPlayerListener(final SingleSubscriber<? super Boolean> singleSubscriber,
+            final PlayConfig config) {
         mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                Log.d(TAG, "OnCompletionListener::onCompletion");
+                Log.d(TAG, "onCompletion " + config.mAudioFile + " or " + config.mAudioResource);
 
                 // could not call stopPlay immediately, otherwise the second sound
                 // could not play, thus no complete notification
@@ -161,7 +164,8 @@ public final class RxAudioPlayer {
         mPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                Log.d(TAG, "OnErrorListener::onError" + what + ", " + extra);
+                Log.d(TAG, "onError " + config.mAudioFile + " or " + config.mAudioResource + ", " +
+                        what + ", " + extra);
                 singleSubscriber.onError(new Throwable("Player error: " + what + ", " +
                         extra));
                 stopPlay();
@@ -282,6 +286,7 @@ public final class RxAudioPlayer {
     }
 
     public synchronized boolean stopPlay() {
+        Log.d(TAG, "stopPlay " + mPlayer);
         if (mPlayer == null) {
             return false;
         }
